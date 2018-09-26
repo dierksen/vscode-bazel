@@ -115,4 +115,28 @@ export abstract class BazelChildProcessCommand extends BazelCommand {
   }
 }
 
-// TODO(allevato): Add support for commands that run in a terminal.
+/** The singleton terminal managed by {@link provideBazelTerminal}. */
+let bazelGlobalTerminal: vscode.Terminal = null
+
+function getBazelGlobalTerminal(): vscode.Terminal {
+  if (bazelGlobalTerminal === null) {
+    bazelGlobalTerminal = vscode.window.createTerminal("Bazel");
+  }
+  return bazelGlobalTerminal;
+}
+
+/** Commands that are executed in a terminal panel. */
+export abstract class BazelTerminalCommand extends BazelCommand {
+  /**
+   * Executes the command, sending its output to the Bazel terminal panel.
+   * 
+   * @param additionalOptions Additional command line options that apply only to this particular
+   *     invocation of the command.
+   */
+  public run(additionalOptions: string[] = []) {
+    const terminal = getBazelGlobalTerminal();
+    terminal.sendText("clear");
+    terminal.show(true);
+    terminal.sendText(`cd ${this.workingDirectory} && ${this.commandLine(additionalOptions)}`);
+  }
+}
